@@ -15,7 +15,7 @@ db = SQLAlchemy(app)
 
 CORS(app)
 
- 
+
 class FoodRescue(db.Model):
     __tablename__ = 'foodrescue'
 
