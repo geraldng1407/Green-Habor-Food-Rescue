@@ -5,7 +5,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://cs302:cs302@host.docker.internal:3306/foodrescue'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
     'db_conn') + '/foodrescue'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -35,7 +34,8 @@ class FoodRescue(db.Model):
     verified = db.Column(db.Boolean, nullable=False)
 
     def __init__(self, title, description, dateposted, datefrom,
-                 dateto, coordinate_long, coordinate_lat, location, foodtype, verified):
+                 dateto, coordinate_long, coordinate_lat, location,
+                 foodtype, verified):
         self.title = title
         self.description = description
         self.dateposted = dateposted
@@ -147,7 +147,9 @@ def replace_post(post_id):
     data = request.get_json()
 
     if all(key in data.keys() for
-           key in ('title', 'description', 'dateposted', 'datefrom', 'dateto', 'coordinate_long', 'coordinate_lat', 'location', 'foodtype', 'verified')):
+           key in ('title', 'description', 'dateposted', 'datefrom',
+                   'dateto', 'coordinate_long', 'coordinate_lat', 'location',
+                   'foodtype', 'verified')):
         post.title = data['title']
         post.description = data['description']
         post.dateposted = data['dateposted']
@@ -181,14 +183,15 @@ def replace_post(post_id):
         }
     ), 500
 
+
 @app.route("/posts/<int:post_id>", methods=['PATCH'])
 def update_post(post_id):
     post = db.session.scalars(
-              db.select(FoodRescue).
-              with_for_update(of=FoodRescue).
-              filter_by(post_id=post_id).
-              limit(1)
-           ).first()
+        db.select(FoodRescue).
+        with_for_update(of=FoodRescue).
+        filter_by(post_id=post_id).
+        limit(1)
+    ).first()
     if post is None:
         return jsonify(
             {
@@ -234,14 +237,15 @@ def update_post(post_id):
             "data": post.to_dict()
         }
     )
-    
+
+
 @app.route("/posts/<int:post_id>", methods=['DELETE'])
 def delete_game(post_id):
     post = db.session.scalars(
-              db.select(FoodRescue).
-              filter_by(post_id=post_id).
-              limit(1)
-           ).first()
+        db.select(FoodRescue).
+        filter_by(post_id=post_id).
+        limit(1)
+    ).first()
     if post is not None:
         try:
             db.session.delete(post)
@@ -268,6 +272,7 @@ def delete_game(post_id):
             "message": "Post not found."
         }
     ), 404
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
