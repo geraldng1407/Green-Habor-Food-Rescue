@@ -1,3 +1,6 @@
+"""
+Food rescue API with Flask and SQLAlchemy.
+"""
 import socket
 import os
 from flask import Flask, request, jsonify
@@ -14,11 +17,10 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_size': 100,
 db = SQLAlchemy(app)
 
 CORS(app)
-
+# pylint: disable=too-many-instance-attributes, too-many-arguments, invalid-name, too-few-public-methods
 
 class FoodRescue(db.Model):
-    __tablename__ = 'foodrescue'
-
+    """Food rescue post model."""
     __tablename__ = 'foodrescue'
 
     post_id = db.Column(db.Integer, primary_key=True)
