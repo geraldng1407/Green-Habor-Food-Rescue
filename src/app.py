@@ -17,7 +17,9 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_size': 100,
 db = SQLAlchemy(app)
 
 CORS(app)
-# pylint: disable=too-many-instance-attributes, too-many-arguments, invalid-name, too-few-public-methods
+# pylint: disable=too-many-instance-attributes, too-many-arguments
+# pylint: disable= invalid-name, too-few-public-methods
+
 
 class FoodRescue(db.Model):
     """Food rescue post model."""
