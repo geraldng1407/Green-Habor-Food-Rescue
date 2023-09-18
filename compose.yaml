@@ -1,0 +1,12 @@
+services:
+  ####################################
+  # Atomic Microservice: FoodRescue
+  ####################################
+  games:
+    build:
+      dockerfile: Dockerfile
+    restart: always
+    env_file:
+      - 'dev.env'
+    ports:
+      - "30000:5000"
