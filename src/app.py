@@ -8,8 +8,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
-    'db_conn') + '/foodrescue'
+if os.environ.get('db_conn'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get(
+        'db_conn') + '/foodrescue'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = \
+        'mysql+mysqlconnector://cs302:cs302@localhost:3306/foodrescue'
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_size': 100,
                                            'pool_recycle': 280}
@@ -31,8 +36,8 @@ class FoodRescue(db.Model):
     dateposted = db.Column(db.DateTime, nullable=False)
     datefrom = db.Column(db.DateTime, nullable=False)
     dateto = db.Column(db.DateTime, nullable=False)
-    coordinate_long = db.Column(db.FLOAT, nullable=False)
-    coordinate_lat = db.Column(db.FLOAT, nullable=False)
+    coordinate_long = db.Column(db.String(64), nullable=False)
+    coordinate_lat = db.Column(db.String(64), nullable=False)
     location = db.Column(db.String(64), nullable=False)
     foodtype = db.Column(db.String(64), nullable=False)
     verified = db.Column(db.Boolean, nullable=False)
@@ -111,9 +116,11 @@ def find_by_id(post_id):
             "data": post.to_dict()
         }), 200
 
-    return jsonify({
-        "message": "Post not found."
-    }), 404
+    return jsonify(
+        {
+            "message": "Post not found."
+        }
+    ), 404
 
 
 @app.route("/posts", methods=['POST'])
@@ -182,8 +189,7 @@ def replace_post(post_id):
     return jsonify(
         {
             "message": "An error occurred replacing the post.",
-            "error": "Keys are missing from the JSON object. " +
-                     " Consider HTTP PATCH instead."
+            "error": "Keys are missing from the JSON object. " + " Consider HTTP PATCH instead."
         }
     ), 500
 
