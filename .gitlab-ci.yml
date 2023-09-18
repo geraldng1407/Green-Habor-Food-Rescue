@@ -34,5 +34,5 @@ integration-tests:
   before_script:
     - docker info
   script:
-    - docker compose -f ci/compose.test.yaml up --exit-code-from games-pytest
+    - docker compose -f ci/compose.test.yaml up --exit-code-from posts-pytest
 
