@@ -6,6 +6,8 @@ import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
+from datetime import datetime
+import math
 
 app = Flask(__name__)
 if os.environ.get('db_conn'):
@@ -57,7 +59,7 @@ class FoodRescue(db.Model):
         self.verified = verified
 
     def to_dict(self):
-        return {
+        data = {
             'post_id': self.post_id,
             'title': self.title,
             'description': self.description,
@@ -68,8 +70,12 @@ class FoodRescue(db.Model):
             'coordinate_lat': self.coordinate_lat,
             'location': self.location,
             'foodtype': self.foodtype,
-            'verified': self.verified
+            'verified': self.verified,
         }
+        if hasattr(self, 'distance'):
+            data['distance'] = self.distance
+
+        return data
 
 
 @app.route("/health")
@@ -282,6 +288,190 @@ def delete_game(post_id):
             "message": "Post not found."
         }
     ), 404
+
+
+def get_distance(lat1, lon1, lat2, lon2):
+    # Haversine formula to calculate distance
+    r = 6371  # Earth radius in km
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * \
+        math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    d = r * c
+    return d
+
+
+def add_distance_attribute(posts, curr_lat, curr_long):
+    for post in posts:
+        post.distance = get_distance(curr_lat, curr_long, float(
+            post.coordinate_lat), float(post.coordinate_long))
+    return sorted(posts, key=lambda x: x.distance)
+
+
+@app.route("/posts/verified")
+def get_verified_posts():
+    '''Defaults to not include expired posts and sort by distance'''
+    try:
+        data = request.get_json()
+        curr_lat = float(data['coordinate_lat'])
+        curr_long = float(data['coordinate_long'])
+
+        now = datetime.now()
+        verified_posts = FoodRescue.query.filter(
+            FoodRescue.verified == True).filter(FoodRescue.dateto > now).all()
+
+        sorted_distance_posts = add_distance_attribute(
+            verified_posts, curr_lat, curr_long)
+        if len(sorted_distance_posts) == 0:
+            return jsonify({
+                "message": "There are no posts."
+            }), 404
+        return jsonify({
+            "data": {
+                "posts": [post.to_dict() for post in sorted_distance_posts]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "message": "Please include your coordinates",
+            "error": str(e)
+        }), 500
+
+
+@app.route("/posts/sortbydistance")
+def get_posts_by_distance():
+    '''Defaults to not include expired posts'''
+    try:
+        data = request.get_json()
+        curr_lat = float(data['coordinate_lat'])
+        curr_long = float(data['coordinate_long'])
+
+        now = datetime.now()
+        active_posts = FoodRescue.query.filter(FoodRescue.dateto > now).all()
+
+        sorted_posts = add_distance_attribute(
+            active_posts, curr_lat, curr_long)
+
+        return jsonify({
+            "data": {
+                "posts": [post.to_dict() for post in sorted_posts]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "message": "Please include your coordinates",
+            "error": str(e)
+        }), 500
+
+
+@app.route("/posts/organic")
+def get_organic_posts():
+    '''Defaults to not include expired posts and sort by distance'''
+    try:
+        data = request.get_json()
+        curr_lat = float(data['coordinate_lat'])
+        curr_long = float(data['coordinate_long'])
+
+        now = datetime.now()
+        organic_posts = FoodRescue.query.filter(
+            FoodRescue.foodtype == 'Organic').filter(FoodRescue.dateto > now).all()
+
+        sorted_distance_posts = add_distance_attribute(
+            organic_posts, curr_lat, curr_long)
+        if len(sorted_distance_posts) == 0:
+            return jsonify({
+                "message": "There are no posts."
+            }), 404
+        return jsonify({
+            "data": {
+                "posts": [post.to_dict() for post in sorted_distance_posts]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "message": "Please include your coordinates",
+            "error": str(e)
+        }), 500
+
+
+@app.route("/posts/vegan")
+def get_vegan_posts():
+    '''Defaults to not include expired posts and sort by distance'''
+    try:
+        data = request.get_json()
+        curr_lat = float(data['coordinate_lat'])
+        curr_long = float(data['coordinate_long'])
+
+        now = datetime.now()
+        vegan_posts = FoodRescue.query.filter(
+            FoodRescue.foodtype == 'Vegan').filter(FoodRescue.dateto > now).all()
+
+        sorted_distance_posts = add_distance_attribute(
+            vegan_posts, curr_lat, curr_long)
+        if len(sorted_distance_posts) == 0:
+            return jsonify({
+                "message": "There are no posts."
+            }), 404
+        return jsonify({
+            "data": {
+                "posts": [post.to_dict() for post in sorted_distance_posts]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "message": "Please include your coordinates",
+            "error": str(e)
+        }), 500
+
+
+@app.route("/posts/new")
+def get_new_posts():
+    '''Defaults to not include expired posts'''
+    try:
+        now = datetime.now()
+        new_posts = FoodRescue.query.filter(FoodRescue.dateto > now).order_by(
+            FoodRescue.dateposted.desc()).all()
+
+        if len(new_posts) == 0:
+            return jsonify({
+                "message": "There are no posts."
+            }), 404
+        return jsonify({
+            "data": {
+                "posts": [post.to_dict() for post in new_posts]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "message": "There is an error retriving posts",
+            "error": str(e)
+        }), 500
+
+
+@app.route("/posts/urgent")
+def get_urgent_posts():
+    '''Defaults to not include expired posts'''
+    try:
+        now = datetime.now()
+        urgent_posts = FoodRescue.query.filter(FoodRescue.dateto > now).all()
+
+        if len(urgent_posts) == 0:
+            return jsonify({
+                "message": "There are no posts."
+            }), 404
+        urgent_posts = sorted(urgent_posts, key=lambda p: abs(p.dateto - now))
+
+        return jsonify({
+            "data": {
+                "posts": [post.to_dict() for post in urgent_posts]
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "message": "There is an error retriving posts",
+            "error": str(e)
+        }), 500
 
 
 if __name__ == '__main__':
