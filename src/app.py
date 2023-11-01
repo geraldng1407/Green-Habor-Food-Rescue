@@ -86,7 +86,7 @@ def health_check():
     return jsonify(
         {
             "message": "Service is healthy.",
-            "service:": "games",
+            "service:": "food-rescue",
             "ip_address": local_ip
         }
     ), 200
@@ -191,7 +191,7 @@ def replace_post(post_id):
             {
                 "data": post.to_dict()
             }
-        )
+        ), 200
     return jsonify(
         {
             "message": "An error occurred replacing the post.",
@@ -252,7 +252,7 @@ def update_post(post_id):
         {
             "data": post.to_dict()
         }
-    )
+    ), 200
 
 
 @app.route("/posts/<int:post_id>", methods=['DELETE'])
@@ -451,7 +451,7 @@ def get_new_posts():
 
 @app.route("/posts/urgent")
 def get_urgent_posts():
-    '''Defaults to not include expired posts'''
+    '''nz'''
     try:
         now = datetime.now()
         urgent_posts = FoodRescue.query.filter(FoodRescue.dateto > now).all()
